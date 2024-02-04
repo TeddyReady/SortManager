@@ -4,7 +4,7 @@
 
 int main(int argc, char *argv[])
 {
-    SortManager manager;
+    SortManager manager(SortOrder::UP);
 
     return 0;
 }

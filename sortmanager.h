@@ -15,18 +15,28 @@ enum class SortType {
     PYRAMID,
 };
 
+enum class SortOrder {
+    UP   ,
+    DOWN ,
+};
+
 class SortManager
 {
 public:
-    SortManager();
+    explicit SortManager(SortOrder order = SortOrder::UP);
 
-    int sort(SortType type);
+    int sort(SortType type, SortOrder order);
 
     void uploadData();
 
 private:
     enum {FLY, DATE, NAME, PLACE};
-    void printData(const QString &fileName);
+
+    void makeHeap(int size, int root, SortOrder order);
+    void printData(const QString &fileName, SortType type, SortOrder order);
+    QDate date(const QString &dateString) const;
+    bool compare(int i, int j) const;
+    QString getRandomName(int i) const;
 
     QVector<QVariantList> data;
 };
