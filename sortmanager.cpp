@@ -1,15 +1,40 @@
 #include "sortmanager.h"
 
-SortManager::SortManager(SortOrder order)
+SortManager::SortManager(int count, SortOrder order)
 {
-    uploadData();
+    double time = 0;
+    const char* ext;
+
+    uploadData(count);
+    qDebug() << "Begin bubble sorting...";
+    delay.start();
     sort(SortType::BUBBLE, order);
+    time = delay.elapsed();
+    ext = (time < 1000) ? "ms" : "sec";
+    time = (time < 1000) ? time : static_cast<double>(time / 1000);
+    qDebug() << "Finished bubble sorting for " << time << ext;
+    printData("./bubble.md", SortType::BUBBLE, order);
 
-    uploadData();
+    uploadData(count);
+    qDebug() << "Begin inserts sorting...";
+    delay.restart();
     sort(SortType::CHOICE, order);
+    time = delay.elapsed();
+    ext = (time < 1000) ? "ms" : "sec";
+    time = (time < 1000) ? time : static_cast<double>(time / 1000);
+    qDebug() << "Finished inserts sorting for " << time << ext;
+    printData("./insert.md", SortType::CHOICE, order);
 
-    uploadData();
+
+    uploadData(count);
+    qDebug() << "Begin pyramid sorting...";
+    delay.restart();
     sort(SortType::PYRAMID, order);
+    time = delay.elapsed();
+    ext = (time < 1000) ? "ms" : "sec";
+    time = (time < 1000) ? time : static_cast<double>(time / 1000);
+    qDebug() << "Finished pyramid sorting for " << time << ext;
+    printData("./pyramid.md", SortType::PYRAMID, order);
 }
 
 int SortManager::sort(SortType type, SortOrder order)
@@ -26,7 +51,6 @@ int SortManager::sort(SortType type, SortOrder order)
                     if (compare(j+1, j))
                         qSwap(data[j], data[j+1]);
             }
-            printData("./bubble.md", type, order);
             break;
 
         case SortOrder::DOWN:
@@ -36,12 +60,11 @@ int SortManager::sort(SortType type, SortOrder order)
                     if (compare(j, j+1))
                         qSwap(data[j], data[j+1]);
             }
-            printData("./bubble.md", type, order);
             break;
         }
+        break;
 
     case SortType::CHOICE:
-
         switch (order)
         {
         case SortOrder::UP:
@@ -75,7 +98,6 @@ int SortManager::sort(SortType type, SortOrder order)
                            || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) == 0 && nextPlace > curPlace);
                 }
             }
-            printData("./insert.md", type, order);
             break;
 
         case SortOrder::DOWN:
@@ -109,13 +131,11 @@ int SortManager::sort(SortType type, SortOrder order)
                            || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) == 0 && nextPlace < curPlace);
                 }
             }
-            printData("./insert.md", type, order);
             break;
         }
         break;
 
     case SortType::PYRAMID:
-
         for (int i = data.size() / 2 - 1; i >= 0; --i)
             makeHeap(data.size(), i, order);
 
@@ -125,18 +145,20 @@ int SortManager::sort(SortType type, SortOrder order)
 
             makeHeap(i, 0, order);
         }
-        printData("./pyramid.md", type, order);
         break;
     }
     return 0;
 }
 
-void SortManager::uploadData()
+void SortManager::uploadData(int count)
 {
+    qDebug() << "Begin data generating...";
     data.clear();
 
-    for (int i = 20; i >=0; --i)
+    for (int i = count; i >=0; --i)
         data.append(QVariantList({i%3, QString("11/%1/2023").arg(i%8), getRandomName(i), i%4}));
+
+    qDebug() << "Data uploaded!";
 }
 
 QString SortManager::getRandomName(int i) const
@@ -249,6 +271,7 @@ QDate SortManager::date(const QString &dateString) const
 
 void SortManager::printData(const QString &fileName, SortType type, SortOrder order)
 {
+    qDebug() << "Begin data printing...";
     QFile file(fileName);
     if ( !file.open(QFile::WriteOnly | QFile::Text) )
     {
@@ -292,4 +315,6 @@ void SortManager::printData(const QString &fileName, SortType type, SortOrder or
         out << i << "|\t" << list.at(FLY).toInt() << "|\t" << list.at(DATE).toString() << "|\t"  << list.at(NAME).toString() << "|\t"  << list.at(PLACE).toInt();
         ++i;
     }
+
+    qDebug() << "Data printed!";
 }

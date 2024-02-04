@@ -8,6 +8,7 @@
 #include <QTextStream>
 #include <QDebug>
 #include <QDate>
+#include <QElapsedTimer>
 
 enum class SortType {
     BUBBLE,
@@ -23,14 +24,13 @@ enum class SortOrder {
 class SortManager
 {
 public:
-    explicit SortManager(SortOrder order = SortOrder::UP);
-
-    int sort(SortType type, SortOrder order);
-
-    void uploadData();
+    explicit SortManager(int count, SortOrder order = SortOrder::UP);
 
 private:
     enum {FLY, DATE, NAME, PLACE};
+
+    void uploadData(int count);
+    int sort(SortType type, SortOrder order);
 
     void makeHeap(int size, int root, SortOrder order);
     void printData(const QString &fileName, SortType type, SortOrder order);
@@ -39,6 +39,7 @@ private:
     QString getRandomName(int i) const;
 
     QVector<QVariantList> data;
+    QElapsedTimer delay;
 };
 
 #endif // SORTMANAGER_H
