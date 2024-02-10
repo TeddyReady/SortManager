@@ -1,5 +1,131 @@
 #include "sortmanager.h"
 
+/**
+ * @brief Data::Data
+ * @param fly - number of flight
+ * @param sDate - date in format 'dd/mm/yyyy'
+ * @param name - name in format 'Some Person'
+ * @param place - number of place in airplane
+ */
+Data::Data(int fly, const QString &sDate, const QString &name, int place)
+    : fly(fly), place(place), sDate(sDate), name(name) {}
+
+/**
+ * @brief Data::at
+ * @param index - number of field (see DataType)
+ * @return One of date fields in QVariant
+ */
+QVariant Data::at(int index) const
+{
+    QVariant item;
+    switch (index)
+    {
+    case 0:
+        item = QVariant(fly);
+        break;
+    case 1:
+        item = QVariant(sDate);
+        break;
+    case 2:
+        item = QVariant(name);
+        break;
+    case 3:
+        item = QVariant(place);
+        break;
+    }
+    return item;
+}
+
+/**
+ * @brief Data::date
+ * @param dateString - string in format 'dd/mm/yyyy'
+ * @return data string converted in QDate
+ */
+QDate Data::date(const QString &dateString) const
+{
+    QStringList dateList = dateString.split("/");
+    return QDate(dateList.at(2).toInt(), dateList.at(1).toInt(), dateList.at(0).toInt());
+}
+
+/**
+ * @brief Data::operator ==
+ * @param other
+ * @return Result of compare
+ */
+bool Data::operator== (const Data &other) const
+{
+    return date(sDate) == date(other.sDate) && fly == other.fly && name.compare(other.name) == 0 && place == other.place;
+}
+
+/**
+ * @brief Data::operator !=
+ * @param other
+ * @return Result of compare
+ */
+bool Data::operator!= (const Data &other) const
+{
+    return !(*this == other);
+}
+
+/**
+ * @brief Data::operator <
+ * @param other
+ * @return Result of compare
+ */
+bool Data::operator< (const Data &other) const
+{
+    if (date(sDate) < date(other.sDate))
+        return true;
+
+    else if (date(sDate) == date(other.sDate) && fly < other.fly)
+        return true;
+
+    else if (date(sDate) == date(other.sDate) && fly == other.fly && name.compare(other.name) < 0)
+        return true;
+
+    else if (date(sDate) == date(other.sDate) && fly == other.fly && name.compare(other.name) == 0 && place < other.place)
+        return true;
+
+    return false;
+}
+
+/**
+ * @brief Data::operator <=
+ * @param other
+ * @return Result of compare
+ */
+bool Data::operator<= (const Data &other) const
+{
+    return (*this < other) || (*this == other);
+}
+
+/**
+ * @brief Data::operator >
+ * @param other
+ * @return Result of compare
+ */
+bool Data::operator> (const Data &other) const
+{
+    return !(*this <= other);
+}
+
+/**
+ * @brief Data::operator >=
+ * @param other
+ * @return Result of compare
+ */
+bool Data::operator>= (const Data &other) const
+{
+    return !(*this < other);
+}
+
+/**
+ * @brief SortManager::SortManager
+ * @param count - number of generated data
+ * @param order - SortOrder::UP or SortOrder::DOWN
+ *
+ * Generate and sort data, check delay
+ */
 SortManager::SortManager(int count, SortOrder order)
 {
     double time = 0;
@@ -37,7 +163,14 @@ SortManager::SortManager(int count, SortOrder order)
     printData("./pyramid.md", SortType::PYRAMID, order);
 }
 
-int SortManager::sort(SortType type, SortOrder order)
+/**
+ * @brief SortManager::sort
+ * @param type - type of sort (check SortType)
+ * @param order - order of sort (check SortOrder)
+ *
+ * Sorting data in correct order with chosen algorithm
+ */
+void SortManager::sort(SortType type, SortOrder order)
 {
     switch (type)
     {
@@ -48,7 +181,7 @@ int SortManager::sort(SortType type, SortOrder order)
             for (int i = 1; i < data.size(); ++i)
             {
                 for(int j = 0; j < data.size() - i; ++j)
-                    if (compare(j+1, j))
+                    if (data[j+1] < data[j])
                         qSwap(data[j], data[j+1]);
             }
             break;
@@ -57,7 +190,7 @@ int SortManager::sort(SortType type, SortOrder order)
             for (int i = 1; i < data.size(); ++i)
             {
                 for(int j = 0; j < data.size() - i; ++j)
-                    if (compare(j, j+1))
+                    if (data[j] < data[j+1])
                         qSwap(data[j], data[j+1]);
             }
             break;
@@ -70,66 +203,18 @@ int SortManager::sort(SortType type, SortOrder order)
         case SortOrder::UP:
             for (int i = 1; i < data.size(); ++i)
             {
-                QDate curDate = date(data.at(i).at(DATE).toString());
-                QDate nextDate = date(data.at(i - 1).at(DATE).toString());
-                int curFly = data.at(i).at(FLY).toInt();
-                int nextFly = data.at(i - 1).at(FLY).toInt();
-                QString curName = data.at(i).at(NAME).toString();
-                QString nextName = data.at(i - 1).at(NAME).toString();
-                int curPlace = data.at(i).at(PLACE).toInt();
-                int nextPlace = data.at(i - 1).at(PLACE).toInt();
-
-                bool flag = nextDate > curDate || (nextDate == curDate && nextFly > curFly) || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) < 0)
-                            || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) == 0 && nextPlace > curPlace);
-
-                for (int j = i - 1; j >= 0 && flag; j--)
-                {
+                Data curEl = data[i];
+                for (int j = i - 1; j >= 0 && data[j] > curEl; j--)
                     qSwap(data[j], data[j+1]);
-
-                    if (j - 1 >= 0)
-                    {
-                        nextDate = date(data.at(j - 1).at(DATE).toString());
-                        nextFly = data.at(j - 1).at(FLY).toInt();
-                        nextName = data.at(j - 1).at(NAME).toString();
-                        nextPlace = data.at(j - 1).at(PLACE).toInt();
-                    }
-
-                    flag = nextDate > curDate || (nextDate == curDate && nextFly > curFly) || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) < 0)
-                           || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) == 0 && nextPlace > curPlace);
-                }
             }
             break;
 
         case SortOrder::DOWN:
             for (int i = 1; i < data.size(); ++i)
             {
-                QDate curDate = date(data.at(i).at(DATE).toString());
-                QDate nextDate = date(data.at(i - 1).at(DATE).toString());
-                int curFly = data.at(i).at(FLY).toInt();
-                int nextFly = data.at(i - 1).at(FLY).toInt();
-                QString curName = data.at(i).at(NAME).toString();
-                QString nextName = data.at(i - 1).at(NAME).toString();
-                int curPlace = data.at(i).at(PLACE).toInt();
-                int nextPlace = data.at(i - 1).at(PLACE).toInt();
-
-                bool flag = nextDate < curDate || (nextDate == curDate && nextFly < curFly) || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) > 0)
-                            || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) == 0 && nextPlace < curPlace);
-
-                for (int j = i - 1; j >= 0 && flag; j--)
-                {
+                Data curEl = data[i];
+                for (int j = i - 1; j >= 0 && data[j] < curEl; j--)
                     qSwap(data[j], data[j+1]);
-
-                    if (j - 1 >= 0)
-                    {
-                        nextDate = date(data.at(j - 1).at(DATE).toString());
-                        nextFly = data.at(j - 1).at(FLY).toInt();
-                        nextName = data.at(j - 1).at(NAME).toString();
-                        nextPlace = data.at(j - 1).at(PLACE).toInt();
-                    }
-
-                    flag = nextDate < curDate || (nextDate == curDate && nextFly < curFly) || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) > 0)
-                           || (nextDate == curDate && nextFly == curFly && curName.compare(nextName) == 0 && nextPlace < curPlace);
-                }
             }
             break;
         }
@@ -147,20 +232,30 @@ int SortManager::sort(SortType type, SortOrder order)
         }
         break;
     }
-    return 0;
 }
 
+/**
+ * @brief SortManager::uploadData
+ * @param count - number of generating data
+ *
+ * Generate data for sort
+ */
 void SortManager::uploadData(int count)
 {
     qDebug() << "Begin data generating...";
     data.clear();
 
     for (int i = count; i >=0; --i)
-        data.append(QVariantList({i%3, QString("11/%1/2023").arg(i%8), getRandomName(i), i%4}));
+        data.append(Data(i%3, QString("11/%1/2023").arg(i%8), getRandomName(i), i%4));
 
     qDebug() << "Data uploaded!";
 }
 
+/**
+ * @brief SortManager::getRandomName
+ * @param i - magic number for random
+ * @return Random name for data
+ */
 QString SortManager::getRandomName(int i) const
 {
     QString result;
@@ -199,38 +294,17 @@ QString SortManager::getRandomName(int i) const
         result.append("Samoilov");
         break;
     }
-
-
     return result;
 }
 
-/* Equiv data[i] < data[j] */
-bool SortManager::compare(int i, int j) const
-{
-    QDate curDate = date(data.at(i).at(DATE).toString());
-    QDate nextDate = date(data.at(j).at(DATE).toString());
-    int curFly = data.at(i).at(FLY).toInt();
-    int nextFly = data.at(j).at(FLY).toInt();
-    QString curName = data.at(i).at(NAME).toString();
-    QString nextName = data.at(j).at(NAME).toString();
-    int curPlace = data.at(i).at(PLACE).toInt();
-    int nextPlace = data.at(j).at(PLACE).toInt();
-
-    if (curDate < nextDate)
-        return true;
-
-    else if (curDate == nextDate && curFly < nextFly)
-        return true;
-
-    else if (curDate == nextDate && curFly == nextFly && curName.compare(nextName) < 0)
-        return true;
-
-    else if (curDate == nextDate && curFly == nextFly && curName.compare(nextName) == 0 && curPlace < nextPlace)
-        return true;
-
-    return false;
-}
-
+/**
+ * @brief SortManager::makeHeap
+ * @param size - size of current heap
+ * @param root - index of current root element
+ * @param order - order of sort
+ *
+ * Create a heap with current size and root. This func is part of Pyramid sort
+ */
 void SortManager::makeHeap(int size, int root, SortOrder order)
 {
     int maxIndex = root;
@@ -240,17 +314,17 @@ void SortManager::makeHeap(int size, int root, SortOrder order)
     switch (order)
     {
     case SortOrder::UP:
-        if (leftIndex < size && compare(maxIndex, leftIndex))
+        if (leftIndex < size && data[maxIndex] < data[leftIndex])
             maxIndex = leftIndex;
 
-        if (rightIndex < size && compare(maxIndex, rightIndex))
+        if (rightIndex < size && data[maxIndex] < data[rightIndex])
             maxIndex = rightIndex;
         break;
     case SortOrder::DOWN:
-        if (leftIndex < size && compare(leftIndex, maxIndex))
+        if (leftIndex < size && data[leftIndex] < data[maxIndex])
             maxIndex = leftIndex;
 
-        if (rightIndex < size && compare(rightIndex, maxIndex))
+        if (rightIndex < size && data[rightIndex] < data[maxIndex])
             maxIndex = rightIndex;
         break;
     }
@@ -263,12 +337,14 @@ void SortManager::makeHeap(int size, int root, SortOrder order)
     }
 }
 
-QDate SortManager::date(const QString &dateString) const
-{
-    QStringList dateList = dateString.split("/");
-    return QDate(dateList.at(2).toInt(), dateList.at(1).toInt(), dateList.at(0).toInt());
-}
-
+/**
+ * @brief SortManager::printData
+ * @param fileName - fullPath of file, where sorted data will be saved
+ * @param type - type of sort
+ * @param order - type of order
+ *
+ * Print all sorted data in file in MarkDown format
+ */
 void SortManager::printData(const QString &fileName, SortType type, SortOrder order)
 {
     qDebug() << "Begin data printing...";

@@ -10,35 +10,85 @@
 #include <QDate>
 #include <QElapsedTimer>
 
-enum class SortType {
-    BUBBLE,
-    CHOICE,
-    PYRAMID,
+
+/**
+ * @brief Type of sort
+ */
+enum class SortType
+{
+    BUBBLE  , ///< Bubble sort
+    CHOICE  , ///< Sort with fast inserts
+    PYRAMID , ///< Pyramid (heap) sort
 };
 
-enum class SortOrder {
-    UP   ,
-    DOWN ,
+/**
+ * @brief Order of sort
+ */
+enum class SortOrder
+{
+    UP   , ///< From min to max (1, 2, 3...)
+    DOWN , ///< From max to min (3, 2, 1...)
 };
 
+/**
+ * @brief Types of data, which containing in Data class
+ */
+enum DataType
+{
+    FLY     , ///< 1th field
+    DATE    , ///< 2nd field
+    NAME    , ///< 3td field
+    PLACE   , ///< 4th field
+};
+
+/**
+ * @brief The Data class
+ *
+ * Wrapper for 4 fields.
+ * Class for comparing in right order, between its fields
+ */
+class Data
+{
+public:
+
+    explicit Data(int fly, const QString &sDate, const QString &name, int place);
+
+    QVariant at(int index) const;
+    bool operator== (const Data &other) const;
+    bool operator!= (const Data &other) const;
+    bool operator< (const Data &other)  const;
+    bool operator<= (const Data &other) const;
+    bool operator> (const Data &other)  const;
+    bool operator>= (const Data &other) const;
+
+private:
+    QDate date(const QString &dateString) const;
+
+    int fly;        ///< number of flight
+    int place;      ///< number of place in airplane
+    QString sDate;  ///< date in format 'dd/mm/yyyy'
+    QString name;   ///< name in format 'Some Person'
+};
+
+/**
+ * @brief The SortManager class
+ *
+ * Class for sorting and generating data (Data)
+ */
 class SortManager
 {
 public:
     explicit SortManager(int count, SortOrder order = SortOrder::UP);
 
 private:
-    enum {FLY, DATE, NAME, PLACE};
-
     void uploadData(int count);
-    int sort(SortType type, SortOrder order);
+    void sort(SortType type, SortOrder order);
 
     void makeHeap(int size, int root, SortOrder order);
     void printData(const QString &fileName, SortType type, SortOrder order);
-    QDate date(const QString &dateString) const;
-    bool compare(int i, int j) const;
     QString getRandomName(int i) const;
 
-    QVector<QVariantList> data;
+    QVector<Data> data;
     QElapsedTimer delay;
 };
 
